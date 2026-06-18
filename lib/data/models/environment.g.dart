@@ -23,13 +23,15 @@ class EnvironmentAdapter extends TypeAdapter<Environment> {
       isActive: fields[3] as bool,
       createdAt: fields[4] as DateTime?,
       updatedAt: fields[5] as DateTime?,
+      syncAt: fields[6] as DateTime?,
+      isDeleted: fields[7] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Environment obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +43,11 @@ class EnvironmentAdapter extends TypeAdapter<Environment> {
       ..writeByte(4)
       ..write(obj.createdAt)
       ..writeByte(5)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(6)
+      ..write(obj.syncAt)
+      ..writeByte(7)
+      ..write(obj.isDeleted);
   }
 
   @override

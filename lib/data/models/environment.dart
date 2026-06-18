@@ -19,6 +19,10 @@ class Environment {
   final DateTime createdAt;
   @HiveField(5)
   DateTime updatedAt;
+  @HiveField(6)
+  DateTime? syncAt;
+  @HiveField(7)
+  bool isDeleted;
 
   Environment({
     String? id,
@@ -27,6 +31,8 @@ class Environment {
     this.isActive = false,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.syncAt,
+    this.isDeleted = false,
   })  : id = id ?? _uuid.v4(),
         variables = variables ?? {},
         createdAt = createdAt ?? DateTime.now(),
@@ -36,12 +42,16 @@ class Environment {
     String? name,
     Map<String, String>? variables,
     bool? isActive,
+    DateTime? syncAt,
+    bool? isDeleted,
   }) {
     return Environment(
       id: id,
       name: name ?? this.name,
       variables: variables ?? Map<String, String>.from(this.variables),
       isActive: isActive ?? this.isActive,
+      syncAt: syncAt ?? this.syncAt,
+      isDeleted: isDeleted ?? this.isDeleted,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );

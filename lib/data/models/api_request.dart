@@ -31,6 +31,10 @@ class ApiRequest {
   final DateTime createdAt;
   @HiveField(10)
   DateTime updatedAt;
+  @HiveField(11)
+  DateTime? syncAt;
+  @HiveField(12)
+  bool isDeleted;
 
   ApiRequest({
     String? id,
@@ -44,6 +48,8 @@ class ApiRequest {
     this.collectionId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.syncAt,
+    this.isDeleted = false,
   })  : id = id ?? _uuid.v4(),
         headers = headers ?? {},
         queryParams = queryParams ?? {},
@@ -61,6 +67,8 @@ class ApiRequest {
     String? collectionId,
     bool clearBody = false,
     bool clearAuth = false,
+    DateTime? syncAt,
+    bool? isDeleted,
   }) {
     return ApiRequest(
       id: id,
@@ -74,6 +82,8 @@ class ApiRequest {
       collectionId: collectionId ?? this.collectionId,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      syncAt: syncAt ?? this.syncAt,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 

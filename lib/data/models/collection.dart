@@ -27,6 +27,10 @@ class CollectionItem {
   DateTime updatedAt;
   @HiveField(8)
   int sortOrder;
+  @HiveField(9)
+  DateTime? syncAt;
+  @HiveField(10)
+  bool isDeleted;
 
   CollectionItem({
     String? id,
@@ -38,6 +42,8 @@ class CollectionItem {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.sortOrder = 0,
+    this.syncAt,
+    this.isDeleted = false,
   })  : id = id ?? _uuid.v4(),
         childIds = childIds ?? [],
         createdAt = createdAt ?? DateTime.now(),
@@ -54,6 +60,8 @@ class CollectionItem {
     String? requestId,
     bool clearRequestId = false,
     int? sortOrder,
+    DateTime? syncAt,
+    bool? isDeleted,
   }) {
     return CollectionItem(
       id: id,
@@ -63,6 +71,8 @@ class CollectionItem {
       type: type ?? this.type,
       requestId: clearRequestId ? null : (requestId ?? this.requestId),
       sortOrder: sortOrder ?? this.sortOrder,
+      syncAt: syncAt ?? this.syncAt,
+      isDeleted: isDeleted ?? this.isDeleted,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );

@@ -26,13 +26,15 @@ class CollectionItemAdapter extends TypeAdapter<CollectionItem> {
       createdAt: fields[6] as DateTime?,
       updatedAt: fields[7] as DateTime?,
       sortOrder: fields[8] as int,
+      syncAt: fields[9] as DateTime?,
+      isDeleted: fields[10] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, CollectionItem obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +52,11 @@ class CollectionItemAdapter extends TypeAdapter<CollectionItem> {
       ..writeByte(7)
       ..write(obj.updatedAt)
       ..writeByte(8)
-      ..write(obj.sortOrder);
+      ..write(obj.sortOrder)
+      ..writeByte(9)
+      ..write(obj.syncAt)
+      ..writeByte(10)
+      ..write(obj.isDeleted);
   }
 
   @override
