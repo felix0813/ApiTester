@@ -11,6 +11,7 @@ class LocalDatabase {
   static const String collectionsBox = 'collections';
   static const String environmentsBox = 'environments';
   static const String historyBox = 'history';
+  static const String settingsBox = 'settings';
 
   static Future<void> init({String? path}) async {
     if (path != null) {
@@ -35,6 +36,7 @@ class LocalDatabase {
     await Hive.openBox<CollectionItem>(collectionsBox);
     await Hive.openBox<Environment>(environmentsBox);
     await Hive.openBox<HistoryEntry>(historyBox);
+    await Hive.openBox(settingsBox);
   }
 
   static Box<ApiRequest> get requests => Hive.box<ApiRequest>(requestsBox);
@@ -44,4 +46,5 @@ class LocalDatabase {
       Hive.box<Environment>(environmentsBox);
   static Box<HistoryEntry> get history =>
       Hive.box<HistoryEntry>(historyBox);
+  static Box get settings => Hive.box(settingsBox);
 }
