@@ -8,7 +8,7 @@ class ApiResponse {
   final int bodySize;
   final String statusText;
 
-  const ApiResponse({
+  ApiResponse({
     required this.statusCode,
     this.headers = const {},
     this.body = '',

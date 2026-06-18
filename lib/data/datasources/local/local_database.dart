@@ -12,8 +12,12 @@ class LocalDatabase {
   static const String environmentsBox = 'environments';
   static const String historyBox = 'history';
 
-  static Future<void> init() async {
-    await Hive.initFlutter();
+  static Future<void> init({String? path}) async {
+    if (path != null) {
+      Hive.init(path);
+    } else {
+      await Hive.initFlutter();
+    }
 
     // Register sub-model adapters first (used as fields by main models)
     Hive.registerAdapter(KeyValuePairAdapter());

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/request_provider.dart';
 import '../../providers/environment_provider.dart';
-import '../../core/constants/app_strings.dart';
-import '../../data/models/request_body.dart';
+import '../../../core/constants/app_strings.dart';
+import '../../../data/models/request_body.dart';
 import '../../widgets/method_selector.dart';
 import '../../widgets/kv_editor.dart';
 import '../../widgets/json_editor_widget.dart';
@@ -147,8 +147,9 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
     );
   }
 
-  Widget _buildParamsTab(request) {
-    final entries = request.queryParams.entries
+  Widget _buildParamsTab(dynamic request) {
+    final Map<String, String> params = Map<String, String>.from(request.queryParams ?? {});
+    final List<KvEntry> entries = params.entries
         .map((e) => KvEntry(key: e.key, value: e.value))
         .toList();
 
@@ -172,8 +173,9 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
     );
   }
 
-  Widget _buildHeadersTab(request) {
-    final entries = request.headers.entries
+  Widget _buildHeadersTab(dynamic request) {
+    final Map<String, String> headers = Map<String, String>.from(request.headers ?? {});
+    final List<KvEntry> entries = headers.entries
         .map((e) => KvEntry(key: e.key, value: e.value))
         .toList();
 

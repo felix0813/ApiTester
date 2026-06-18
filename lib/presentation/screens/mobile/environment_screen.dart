@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/environment_provider.dart';
-import '../../data/models/environment.dart';
-import '../../core/constants/app_strings.dart';
+import '../../../data/models/environment.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../widgets/empty_state.dart';
 
 class EnvironmentScreen extends ConsumerStatefulWidget {

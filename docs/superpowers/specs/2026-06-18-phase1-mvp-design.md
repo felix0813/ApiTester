@@ -38,16 +38,16 @@ Provider 更新响应状态 → UI 渲染响应
 
 ## 3. Phase 1 实现范围
 
-| 模块 | 功能点 |
-|------|--------|
-| HTTP 引擎 | GET/POST/PUT/DELETE/PATCH/HEAD/OPTIONS, Dio 封装, 超时配置, 取消请求 |
-| 请求编辑器 | 方法选择器(颜色编码), URL 输入, Headers KV, Query Params KV, JSON Body 编辑器, Form Data Body |
-| 响应展示 | 状态码(2xx绿/3xx蓝/4xx橙/5xx红), 响应时间(ms), Body 大小, JSON 格式化/Pretty/Raw, 响应 Headers 列表 |
-| 集合管理 | 创建/编辑/删除文件夹, 创建/编辑/删除请求, 单层文件夹嵌套, 保存请求到集合, 从集合加载请求 |
-| 环境变量 | 多环境管理(开发/测试/生产), 变量 KV 编辑, `{{variable}}` 语法替换, 一键切换当前环境 |
-| 历史记录 | 每次请求自动保存, 按时间倒序列表, 显示方法+URL+状态码, 一键重发, 清空历史 |
-| 本地存储 | Hive boxes: requests, collections, environments, history, settings |
-| Android 适配 | 底部导航 4 Tab(请求/集合/环境/我的), 竖屏为主 |
+| 模块         | 功能点                                                                             |
+|------------|---------------------------------------------------------------------------------|
+| HTTP 引擎    | GET/POST/PUT/DELETE/PATCH/HEAD/OPTIONS, Dio 封装, 超时配置, 取消请求                      |
+| 请求编辑器      | 方法选择器(颜色编码), URL 输入, Headers KV, Query Params KV, JSON Body 编辑器, Form Data Body |
+| 响应展示       | 状态码(2xx绿/3xx蓝/4xx橙/5xx红), 响应时间(ms), Body 大小, JSON 格式化/Pretty/Raw, 响应 Headers 列表 |
+| 集合管理       | 创建/编辑/删除文件夹, 创建/编辑/删除请求, 单层文件夹嵌套, 保存请求到集合, 从集合加载请求                              |
+| 环境变量       | 多环境管理(开发/测试/生产), 变量 KV 编辑, `{{variable}}` 语法替换, 一键切换当前环境                        |
+| 历史记录       | 每次请求自动保存, 按时间倒序列表, 显示方法+URL+状态码, 一键重发, 清空历史                                     |
+| 本地存储       | Hive boxes: requests, collections, environments, history, settings              |
+| Android 适配 | 底部导航 4 Tab(请求/集合/环境/我的), 竖屏为主                                                   |
 
 ## 4. 项目结构
 

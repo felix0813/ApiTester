@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/request_provider.dart';
-import '../../data/models/collection.dart';
-import '../../data/models/api_request.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
+import '../../../data/models/collection.dart';
+import '../../../data/models/api_request.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../widgets/empty_state.dart';
 
 class CollectionScreen extends ConsumerStatefulWidget {
