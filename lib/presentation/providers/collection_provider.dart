@@ -51,6 +51,32 @@ class CollectionTreeNotifier
         [];
   }
 
+  Future<void> reorderRootItems(int oldIndex, int newIndex) async {
+    final items = getRootItems();
+    if (oldIndex < 0 || oldIndex >= items.length) return;
+    if (newIndex < 0 || newIndex > items.length) return;
+
+    final movedItem = items.removeAt(oldIndex);
+    items.insert(newIndex > oldIndex ? newIndex - 1 : newIndex, movedItem);
+
+    for (int i = 0; i < items.length; i++) {
+      await _repo.save(items[i].copyWith(sortOrder: i));
+    }
+  }
+
+  Future<void> reorderChildren(String parentId, int oldIndex, int newIndex) async {
+    final children = getChildren(parentId);
+    if (oldIndex < 0 || oldIndex >= children.length) return;
+    if (newIndex < 0 || newIndex > children.length) return;
+
+    final movedItem = children.removeAt(oldIndex);
+    children.insert(newIndex > oldIndex ? newIndex - 1 : newIndex, movedItem);
+
+    for (int i = 0; i < children.length; i++) {
+      await _repo.save(children[i].copyWith(sortOrder: i));
+    }
+  }
+
   @override
   void dispose() {
     _sub?.cancel();

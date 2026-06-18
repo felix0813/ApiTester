@@ -124,17 +124,31 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
             );
           }
 
-          return ListView.builder(
+          return ReorderableListView.builder(
             padding: const EdgeInsets.all(12),
             itemCount: rootItems.length,
+            onReorder: (oldIndex, newIndex) {
+              ref.read(collectionTreeProvider.notifier)
+                  .reorderRootItems(oldIndex, newIndex);
+            },
+            proxyDecorator: (child, index, animation) {
+              return Material(
+                elevation: 2,
+                shadowColor: Colors.black26,
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.transparent,
+                child: child,
+              );
+            },
             itemBuilder: (context, index) {
+              final item = rootItems[index];
               return _CollectionTreeTile(
-                item: rootItems[index],
+                key: ValueKey(item.id),
+                item: item,
                 allItems: items,
                 onTap: () {
-                  if (rootItems[index].isRequest &&
-                      rootItems[index].requestId != null) {
-                    _loadRequest(rootItems[index].requestId!);
+                  if (item.isRequest && item.requestId != null) {
+                    _loadRequest(item.requestId!);
                   }
                 },
                 onDelete: (id) {
@@ -159,6 +173,7 @@ class _CollectionTreeTile extends StatelessWidget {
   final ValueChanged<String> onCreateChild;
 
   const _CollectionTreeTile({
+    super.key,
     required this.item,
     required this.allItems,
     this.onTap,
