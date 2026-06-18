@@ -30,13 +30,15 @@ class ApiRequestAdapter extends TypeAdapter<ApiRequest> {
       updatedAt: fields[10] as DateTime?,
       syncAt: fields[11] as DateTime?,
       isDeleted: fields[12] as bool,
+      preRequestScript: fields[13] as String,
+      testsScript: fields[14] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, ApiRequest obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -62,7 +64,11 @@ class ApiRequestAdapter extends TypeAdapter<ApiRequest> {
       ..writeByte(11)
       ..write(obj.syncAt)
       ..writeByte(12)
-      ..write(obj.isDeleted);
+      ..write(obj.isDeleted)
+      ..writeByte(13)
+      ..write(obj.preRequestScript)
+      ..writeByte(14)
+      ..write(obj.testsScript);
   }
 
   @override

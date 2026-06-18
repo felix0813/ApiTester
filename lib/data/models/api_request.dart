@@ -35,6 +35,10 @@ class ApiRequest {
   DateTime? syncAt;
   @HiveField(12)
   bool isDeleted;
+  @HiveField(13)
+  String preRequestScript;
+  @HiveField(14)
+  String testsScript;
 
   ApiRequest({
     String? id,
@@ -50,6 +54,8 @@ class ApiRequest {
     DateTime? updatedAt,
     this.syncAt,
     this.isDeleted = false,
+    this.preRequestScript = '',
+    this.testsScript = '',
   })  : id = id ?? _uuid.v4(),
         headers = headers ?? {},
         queryParams = queryParams ?? {},
@@ -69,6 +75,8 @@ class ApiRequest {
     bool clearAuth = false,
     DateTime? syncAt,
     bool? isDeleted,
+    String? preRequestScript,
+    String? testsScript,
   }) {
     return ApiRequest(
       id: id,
@@ -84,6 +92,8 @@ class ApiRequest {
       updatedAt: DateTime.now(),
       syncAt: syncAt ?? this.syncAt,
       isDeleted: isDeleted ?? this.isDeleted,
+      preRequestScript: preRequestScript ?? this.preRequestScript,
+      testsScript: testsScript ?? this.testsScript,
     );
   }
 
