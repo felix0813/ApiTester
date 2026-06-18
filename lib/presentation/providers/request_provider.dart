@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/api_request.dart';
 import '../../data/models/api_response.dart';
@@ -105,6 +106,7 @@ class ResponseNotifier extends StateNotifier<ResponseState> {
         statusCode: response.statusCode,
         durationMs: response.durationMs,
         bodySize: response.bodySize,
+        requestSnapshot: jsonEncode(request.toMap()),
       ));
     } catch (e) {
       state = state.copyWith(

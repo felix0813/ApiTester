@@ -24,13 +24,14 @@ class HistoryEntryAdapter extends TypeAdapter<HistoryEntry> {
       durationMs: fields[4] as int,
       bodySize: fields[5] as int,
       sentAt: fields[6] as DateTime?,
+      requestSnapshot: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, HistoryEntry obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class HistoryEntryAdapter extends TypeAdapter<HistoryEntry> {
       ..writeByte(5)
       ..write(obj.bodySize)
       ..writeByte(6)
-      ..write(obj.sentAt);
+      ..write(obj.sentAt)
+      ..writeByte(7)
+      ..write(obj.requestSnapshot);
   }
 
   @override

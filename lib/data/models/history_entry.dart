@@ -21,6 +21,8 @@ class HistoryEntry {
   final int bodySize;
   @HiveField(6)
   final DateTime sentAt;
+  @HiveField(7)
+  final String? requestSnapshot;
 
   HistoryEntry({
     String? id,
@@ -30,6 +32,7 @@ class HistoryEntry {
     this.durationMs = 0,
     this.bodySize = 0,
     DateTime? sentAt,
+    this.requestSnapshot,
   })  : id = id ?? _uuid.v4(),
         sentAt = sentAt ?? DateTime.now();
 }

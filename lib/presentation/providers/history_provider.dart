@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/models/api_request.dart';
 import '../../data/models/history_entry.dart';
 import '../../domain/repositories/history_repository.dart';
 import 'request_provider.dart';
@@ -37,6 +39,16 @@ class HistoryListNotifier
 
   Future<void> delete(String id) async {
     await _repo.delete(id);
+  }
+
+  ApiRequest? getRequestFromHistory(HistoryEntry entry) {
+    if (entry.requestSnapshot == null) return null;
+    try {
+      final map = jsonDecode(entry.requestSnapshot!) as Map<String, dynamic>;
+      return ApiRequest.fromMap(map);
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

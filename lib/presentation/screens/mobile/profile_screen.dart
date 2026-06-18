@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/history_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/request_provider.dart';
 import '../../../data/models/history_entry.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -156,13 +157,13 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _HistoryTile extends StatelessWidget {
+class _HistoryTile extends ConsumerWidget {
   final HistoryEntry entry;
 
   const _HistoryTile({required this.entry});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final methodColor = AppColors.forMethod(entry.method);
 
     return Card(
@@ -170,7 +171,11 @@ class _HistoryTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // History replay - loads request into editor
+          final historyNotifier = ref.read(historyListProvider.notifier);
+          final request = historyNotifier.getRequestFromHistory(entry);
+          if (request != null) {
+            ref.read(currentRequestProvider.notifier).loadRequest(request);
+          }
         },
         child: Padding(
           padding: const EdgeInsets.all(10),
