@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../services/script_engine.dart';
 
 class ApiResponse {
   final int statusCode;
@@ -7,6 +8,7 @@ class ApiResponse {
   final int durationMs;
   final int bodySize;
   final String statusText;
+  final ScriptResult? scriptResult;
 
   ApiResponse({
     required this.statusCode,
@@ -15,6 +17,7 @@ class ApiResponse {
     this.durationMs = 0,
     this.bodySize = 0,
     String? statusText,
+    this.scriptResult,
   }) : statusText = statusText ?? _defaultStatusText(statusCode);
 
   String get prettyBody {

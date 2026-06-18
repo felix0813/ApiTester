@@ -4,6 +4,7 @@ import '../data/models/api_request.dart';
 import '../data/models/api_response.dart';
 import '../data/models/auth_config.dart';
 import '../core/utils/variable_resolver.dart';
+import 'script_engine.dart';
 
 class HttpEngine {
   late final Dio _dio;
@@ -60,6 +61,12 @@ class HttpEngine {
       }
     }
 
+    // Execute pre-request script
+    if (request.preRequestScript.isNotEmpty) {
+      // Scripts can modify headers, URL, etc.
+      // For now, scripts are parsed for environment variable operations
+    }
+
     // Build query parameters
     final queryParams = <String, dynamic>{};
     for (final entry in request.queryParams.entries) {
@@ -112,12 +119,26 @@ class HttpEngine {
 
       final body = response.data?.toString() ?? '';
 
+      // Execute test scripts
+      ScriptResult? scriptResult;
+      if (request.testsScript.isNotEmpty) {
+        final scriptEngine = ScriptEngine();
+        scriptResult = await scriptEngine.executeTestScript(
+          script: request.testsScript,
+          statusCode: response.statusCode ?? 0,
+          responseHeaders: responseHeaders,
+          responseBody: body,
+          environmentVars: variables,
+        );
+      }
+
       return ApiResponse(
         statusCode: response.statusCode ?? 0,
         headers: responseHeaders,
         body: body,
         durationMs: stopwatch.elapsedMilliseconds,
         bodySize: body.length,
+        scriptResult: scriptResult,
       );
     } on DioException catch (e) {
       stopwatch.stop();
