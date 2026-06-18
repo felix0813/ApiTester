@@ -10,6 +10,7 @@ import '../../widgets/kv_editor.dart';
 import '../../widgets/json_editor_widget.dart';
 import '../../widgets/response_viewer.dart';
 import '../../widgets/auth_config_widget.dart';
+import '../../widgets/script_editor_widget.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
   const RequestScreen({super.key});
@@ -25,7 +26,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
   @override
   void initState() {
     super.initState();
-    _requestTabController = TabController(length: 4, vsync: this);
+    _requestTabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -118,6 +119,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
               Tab(text: 'Headers'),
               Tab(text: 'Body'),
               Tab(text: 'Auth'),
+              Tab(text: 'Scripts'),
             ],
             labelStyle: const TextStyle(fontSize: 13),
           ),
@@ -132,6 +134,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
                 _buildHeadersTab(request),
                 _buildBodyTab(request),
                 _buildAuthTab(request),
+                _buildScriptsTab(request),
               ],
             ),
           ),
@@ -301,6 +304,47 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
               (r) => r.copyWith(auth: updated),
             );
       },
+    );
+  }
+
+  Widget _buildScriptsTab(dynamic request) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          const TabBar(
+            tabs: [
+              Tab(text: 'Pre-request'),
+              Tab(text: 'Tests'),
+            ],
+            labelStyle: TextStyle(fontSize: 12),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                ScriptEditorWidget(
+                  script: request.preRequestScript ?? '',
+                  label: 'Pre-request Script',
+                  onChanged: (v) {
+                    ref.read(currentRequestProvider.notifier).updateRequest(
+                          (r) => r.copyWith(preRequestScript: v),
+                        );
+                  },
+                ),
+                ScriptEditorWidget(
+                  script: request.testsScript ?? '',
+                  label: 'Tests Script',
+                  onChanged: (v) {
+                    ref.read(currentRequestProvider.notifier).updateRequest(
+                          (r) => r.copyWith(testsScript: v),
+                        );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
