@@ -4,10 +4,12 @@ import '../../providers/request_provider.dart';
 import '../../providers/environment_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/request_body.dart';
+import '../../../data/models/auth_config.dart';
 import '../../widgets/method_selector.dart';
 import '../../widgets/kv_editor.dart';
 import '../../widgets/json_editor_widget.dart';
 import '../../widgets/response_viewer.dart';
+import '../../widgets/auth_config_widget.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
   const RequestScreen({super.key});
@@ -23,7 +25,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
   @override
   void initState() {
     super.initState();
-    _requestTabController = TabController(length: 3, vsync: this);
+    _requestTabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -115,6 +117,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
               Tab(text: 'Params'),
               Tab(text: 'Headers'),
               Tab(text: 'Body'),
+              Tab(text: 'Auth'),
             ],
             labelStyle: const TextStyle(fontSize: 13),
           ),
@@ -128,6 +131,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
                 _buildParamsTab(request),
                 _buildHeadersTab(request),
                 _buildBodyTab(request),
+                _buildAuthTab(request),
               ],
             ),
           ),
@@ -285,6 +289,18 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
               );
         },
       ),
+    );
+  }
+
+  Widget _buildAuthTab(dynamic request) {
+    final auth = request.auth ?? const AuthConfig();
+    return AuthConfigWidget(
+      config: auth,
+      onChanged: (updated) {
+        ref.read(currentRequestProvider.notifier).updateRequest(
+              (r) => r.copyWith(auth: updated),
+            );
+      },
     );
   }
 }
