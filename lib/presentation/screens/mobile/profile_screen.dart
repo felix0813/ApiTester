@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/history_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/request_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../../data/models/history_entry.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/status_badge.dart';
+import 'auth_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -16,6 +18,8 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(historyListProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final user = ref.watch(currentUserProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -24,38 +28,87 @@ class ProfileScreen extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Account section placeholder (Phase 3)
+          // Account section
           Padding(
             padding: const EdgeInsets.all(16),
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.1),
-                      child: Icon(
-                        Icons.person_outline,
-                        color: Theme.of(context).colorScheme.primary,
+                child: isAuthenticated
+                    ? Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.1),
+                            child: Text(
+                              (user?.email ?? '?')[0].toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(user?.email ?? '',
+                                    style: const TextStyle(
+                                        fontSize: 14, fontWeight: FontWeight.w600)),
+                                const Text('Signed in',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              await ref.read(authServiceProvider).signOut();
+                            },
+                            child: const Text('Sign Out'),
+                          ),
+                        ],
+                      )
+                    : InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const AuthScreen()),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.1),
+                              child: Icon(
+                                Icons.person_outline,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Local Mode',
+                                      style: TextStyle(
+                                          fontSize: 16, fontWeight: FontWeight.w600)),
+                                  Text('Sign in to sync your data',
+                                      style: TextStyle(fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Local Mode',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w600)),
-                        Text('Sign in to sync your data',
-                            style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                  ],
-                ),
               ),
             ),
           ),
