@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/history_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../../data/models/history_entry.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -13,6 +14,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(historyListProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -56,6 +58,40 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          // Theme settings
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.dark_mode_outlined),
+                    title: const Text('Theme'),
+                    subtitle: _buildThemeSubtitle(themeMode),
+                    trailing: SegmentedButton<ThemeMode>(
+                      segments: const [
+                        ButtonSegment(value: ThemeMode.light, label: Text('Light')),
+                        ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                        ButtonSegment(value: ThemeMode.system, label: Text('Auto')),
+                      ],
+                      selected: {themeMode},
+                      onSelectionChanged: (mode) {
+                        ref.read(themeModeProvider.notifier).setTheme(mode.first);
+                      },
+                      style: ButtonStyle(
+                        visualDensity: VisualDensity.compact,
+                        textStyle: WidgetStateProperty.all(
+                          const TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
 
           // History section
           Padding(
@@ -106,6 +142,17 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildThemeSubtitle(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return const Text('Light', style: TextStyle(fontSize: 12));
+      case ThemeMode.dark:
+        return const Text('Dark', style: TextStyle(fontSize: 12));
+      case ThemeMode.system:
+        return const Text('Follow system', style: TextStyle(fontSize: 12));
+    }
   }
 }
 
