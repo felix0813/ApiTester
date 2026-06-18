@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../data/models/api_request.dart';
 import '../data/models/api_response.dart';
+import '../data/models/auth_config.dart';
 import '../core/utils/variable_resolver.dart';
 
 class HttpEngine {
@@ -37,6 +39,26 @@ class HttpEngine {
       request.headers,
       variables,
     );
+
+    // Inject auth headers
+    if (request.auth != null && request.auth!.type != AuthType.none) {
+      final auth = request.auth!;
+      switch (auth.type) {
+        case AuthType.bearer:
+          resolvedHeaders['Authorization'] = 'Bearer ${auth.token}';
+          break;
+        case AuthType.basic:
+          final credentials = '${auth.username}:${auth.password}';
+          final encoded = base64Encode(utf8.encode(credentials));
+          resolvedHeaders['Authorization'] = 'Basic $encoded';
+          break;
+        case AuthType.apiKey:
+          resolvedHeaders[auth.apiKeyHeader] = auth.apiKey;
+          break;
+        case AuthType.none:
+          break;
+      }
+    }
 
     // Build query parameters
     final queryParams = <String, dynamic>{};
