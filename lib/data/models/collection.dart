@@ -1,0 +1,65 @@
+import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
+
+part 'collection.g.dart';
+
+const _uuid = Uuid();
+
+enum CollectionType { folder, request }
+
+@HiveType(typeId: 1)
+class CollectionItem {
+  @HiveField(0)
+  final String id;
+  @HiveField(1)
+  String name;
+  @HiveField(2)
+  String? parentId;
+  @HiveField(3)
+  List<String> childIds;
+  @HiveField(4)
+  CollectionType type;
+  @HiveField(5)
+  String? requestId;
+  @HiveField(6)
+  final DateTime createdAt;
+  @HiveField(7)
+  DateTime updatedAt;
+
+  CollectionItem({
+    String? id,
+    required this.name,
+    this.parentId,
+    List<String>? childIds,
+    this.type = CollectionType.folder,
+    this.requestId,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  })  : id = id ?? _uuid.v4(),
+        childIds = childIds ?? [],
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
+
+  bool get isFolder => type == CollectionType.folder;
+  bool get isRequest => type == CollectionType.request;
+
+  CollectionItem copyWith({
+    String? name,
+    String? parentId,
+    List<String>? childIds,
+    CollectionType? type,
+    String? requestId,
+    bool clearRequestId = false,
+  }) {
+    return CollectionItem(
+      id: id,
+      name: name ?? this.name,
+      parentId: parentId ?? this.parentId,
+      childIds: childIds ?? List<String>.from(this.childIds),
+      type: type ?? this.type,
+      requestId: clearRequestId ? null : (requestId ?? this.requestId),
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
+    );
+  }
+}
