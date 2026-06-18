@@ -11,6 +11,9 @@ class CollectionRepositoryImpl implements CollectionRepository {
       : _local = local ?? CollectionLocalDataSource();
 
   @override
+  Future<List<CollectionItem>> getAll() => _local.getAll();
+
+  @override
   Future<List<CollectionItem>> getRootItems() => _local.getRootItems();
 
   @override

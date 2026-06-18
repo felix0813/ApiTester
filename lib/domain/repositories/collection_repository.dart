@@ -1,6 +1,7 @@
 import '../../data/models/collection.dart';
 
 abstract class CollectionRepository {
+  Future<List<CollectionItem>> getAll();
   Future<List<CollectionItem>> getRootItems();
   Future<List<CollectionItem>> getChildren(String parentId);
   Future<CollectionItem?> getById(String id);
