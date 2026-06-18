@@ -37,6 +37,7 @@ class LocalDatabase {
     await Hive.openBox<Environment>(environmentsBox);
     await Hive.openBox<HistoryEntry>(historyBox);
     await Hive.openBox(settingsBox);
+    await Hive.openBox('sync_queue');
 
     // Migrate: assign sortOrder to existing items by createdAt
     final collections = Hive.box<CollectionItem>(collectionsBox);
