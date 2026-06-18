@@ -37,6 +37,27 @@ class LocalDatabase {
     await Hive.openBox<Environment>(environmentsBox);
     await Hive.openBox<HistoryEntry>(historyBox);
     await Hive.openBox(settingsBox);
+
+    // Migrate: assign sortOrder to existing items by createdAt
+    final collections = Hive.box<CollectionItem>(collectionsBox);
+    if (collections.isNotEmpty) {
+      final all = collections.values.toList();
+      final hasUnsorted = all.any((c) => c.sortOrder == 0);
+      if (hasUnsorted && all.length > 1) {
+        final groups = <String?, List<CollectionItem>>{};
+        for (final item in all) {
+          groups.putIfAbsent(item.parentId, () => []).add(item);
+        }
+        for (final entry in groups.entries) {
+          final sorted = entry.value
+            ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          for (int i = 0; i < sorted.length; i++) {
+            sorted[i].sortOrder = i;
+            await collections.put(sorted[i].id, sorted[i]);
+          }
+        }
+      }
+    }
   }
 
   static Box<ApiRequest> get requests => Hive.box<ApiRequest>(requestsBox);

@@ -11,9 +11,11 @@ class CollectionLocalDataSource {
   }
 
   Future<List<CollectionItem>> getByParentId(String? parentId) async {
-    return LocalDatabase.collections.values
+    final items = LocalDatabase.collections.values
         .where((c) => c.parentId == parentId)
         .toList();
+    items.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return items;
   }
 
   Future<List<CollectionItem>> getRootItems() async {

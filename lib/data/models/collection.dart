@@ -25,6 +25,8 @@ class CollectionItem {
   final DateTime createdAt;
   @HiveField(7)
   DateTime updatedAt;
+  @HiveField(8)
+  int sortOrder;
 
   CollectionItem({
     String? id,
@@ -35,6 +37,7 @@ class CollectionItem {
     this.requestId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.sortOrder = 0,
   })  : id = id ?? _uuid.v4(),
         childIds = childIds ?? [],
         createdAt = createdAt ?? DateTime.now(),
@@ -50,6 +53,7 @@ class CollectionItem {
     CollectionType? type,
     String? requestId,
     bool clearRequestId = false,
+    int? sortOrder,
   }) {
     return CollectionItem(
       id: id,
@@ -58,6 +62,7 @@ class CollectionItem {
       childIds: childIds ?? List<String>.from(this.childIds),
       type: type ?? this.type,
       requestId: clearRequestId ? null : (requestId ?? this.requestId),
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
