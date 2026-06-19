@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/request_provider.dart';
 import '../../../data/models/collection.dart';
@@ -104,6 +105,20 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.tabCollections),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.play_circle_outline),
+            tooltip: 'Run Collection',
+            onPressed: () {
+              final rootItems = ref.read(collectionTreeProvider).valueOrNull
+                  ?.where((c) => c.parentId == null)
+                  .toList();
+              if (rootItems != null && rootItems.isNotEmpty) {
+                context.go('/runner/${rootItems.first.id}');
+              }
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateDialog(),
