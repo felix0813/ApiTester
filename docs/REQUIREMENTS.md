@@ -306,35 +306,35 @@ class Collection {
 ### Phase 1 - MVP（4 周）
 
 - [x] 项目初始化 & 平台配置
-- [ ] HTTP 请求编辑器（GET/POST/Headers/Body）
-- [ ] 响应展示（状态码/Body/Headers/时间）
-- [ ] 本地存储（集合管理）
-- [ ] 环境变量基础功能
-- [ ] Android 基础适配
+- [x] HTTP 请求编辑器（GET/POST/Headers/Body）
+- [x] 响应展示（状态码/Body/Headers/时间）
+- [x] 本地存储（集合管理）
+- [x] 环境变量基础功能
+- [x] Android 基础适配
 
 ### Phase 2 - 核心增强（3 周）
 
-- [ ] 完整的集合管理（文件夹嵌套、拖拽排序）
-- [ ] 历史记录
-- [ ] Auth 认证支持（Bearer/Basic/API Key）
+- [x] 完整的集合管理（文件夹嵌套、拖拽排序）
+- [x] 历史记录
+- [x] Auth 认证支持（Bearer/Basic/API Key）
 - [ ] cURL 导入
-- [ ] Windows 端适配
-- [ ] 深色模式
+- [x] Windows 端适配
+- [x] 深色模式
 
 ### Phase 3 - 云同步（3 周）
 
-- [ ] 用户注册/登录系统
-- [ ] 云端数据同步
-- [ ] 离线队列 & 冲突处理
-- [ ] 跨设备数据一致性
+- [x] 用户注册/登录系统
+- [x] 云端数据同步
+- [x] 离线队列 & 冲突处理
+- [x] 跨设备数据一致性
 
 ### Phase 4 - 高级功能（2 周）
 
-- [ ] 测试脚本（Pre-request / Tests）
-- [ ] Postman Collection 导入
-- [ ] OpenAPI 导入
-- [ ] 请求组合测试（Runner）
-- [ ] 性能优化 & 稳定性
+- [x] 测试脚本（Pre-request / Tests）
+- [x] Postman Collection 导入
+- [x] OpenAPI 导入
+- [x] 请求组合测试（Runner）
+- [x] 性能优化 & 稳定性
 
 ---
 
