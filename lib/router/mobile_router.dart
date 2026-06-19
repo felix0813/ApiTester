@@ -6,6 +6,7 @@ import '../presentation/screens/mobile/collection_screen.dart';
 import '../presentation/screens/mobile/environment_screen.dart';
 import '../presentation/screens/mobile/profile_screen.dart';
 import '../presentation/screens/mobile/auth_screen.dart';
+import '../presentation/screens/mobile/import_screen.dart';
 
 final mobileRouter = GoRouter(
   initialLocation: '/request',
@@ -27,6 +28,10 @@ final mobileRouter = GoRouter(
     GoRoute(
       path: '/auth',
       builder: (context, state) => const AuthScreen(),
+    ),
+    GoRoute(
+      path: '/import',
+      builder: (context, state) => const ImportScreen(),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {

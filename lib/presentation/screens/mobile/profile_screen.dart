@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/history_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/request_provider.dart';
@@ -142,6 +143,23 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Import section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.file_upload_outlined),
+                title: const Text('Import Collections'),
+                subtitle: const Text('Import from Postman or OpenAPI'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  context.go('/import');
+                },
               ),
             ),
           ),
