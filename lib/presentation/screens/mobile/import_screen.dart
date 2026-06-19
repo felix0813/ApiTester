@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/utils/postman_importer.dart';
+import '../../../core/utils/openapi_importer.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/request_provider.dart';
 
@@ -38,6 +39,46 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
       final importer = PostmanImporter();
       final importResult = importer.importFromJson(jsonString);
+
+      for (final request in importResult.requests) {
+        await ref.read(requestRepositoryProvider).save(request);
+      }
+      for (final collection in importResult.collections) {
+        await ref.read(collectionTreeProvider.notifier).save(collection);
+      }
+
+      setState(() {
+        _isLoading = false;
+        _successMessage = 'Imported ${importResult.collections.length} collections, ${importResult.requests.length} requests';
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Import failed: $e';
+      });
+    }
+  }
+
+  Future<void> _importOpenApiSpec() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json', 'yaml', 'yml'],
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      setState(() {
+        _isLoading = true;
+        _error = null;
+        _successMessage = null;
+      });
+
+      final file = File(result.files.first.path!);
+      final content = await file.readAsString();
+
+      final importer = OpenApiImporter();
+      final importResult = importer.import(content);
 
       for (final request in importResult.requests) {
         await ref.read(requestRepositoryProvider).save(request);
@@ -99,6 +140,16 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                 subtitle: const Text('Import from Postman Collection v2.1 JSON file'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _isLoading ? null : _importPostmanCollection,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.code_outlined),
+                title: const Text('Import OpenAPI Spec'),
+                subtitle: const Text('Import from OpenAPI 3.0 JSON or YAML file'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _isLoading ? null : _importOpenApiSpec,
               ),
             ),
           ],
