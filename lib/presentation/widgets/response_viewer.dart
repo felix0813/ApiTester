@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/models/api_response.dart';
+import '../../services/script_engine.dart';
 import '../../core/constants/app_colors.dart';
 import 'status_badge.dart';
 
@@ -81,6 +82,9 @@ class _ResponseViewerState extends State<ResponseViewer>
       );
     }
 
+    final hasScriptResults = resp.scriptResult != null &&
+        resp.scriptResult!.testResults.isNotEmpty;
+
     return Column(
       children: [
         // Status bar
@@ -108,6 +112,16 @@ class _ResponseViewerState extends State<ResponseViewer>
                 icon: Icons.data_usage,
                 label: resp.formattedSize,
               ),
+              if (hasScriptResults) ...[
+                const SizedBox(width: 12),
+                _InfoChip(
+                  icon: resp.scriptResult!.passed
+                      ? Icons.check_circle
+                      : Icons.cancel,
+                  label: '${resp.scriptResult!.testResults.length} tests',
+                  color: resp.scriptResult!.passed ? Colors.green : Colors.red,
+                ),
+              ],
             ],
           ),
         ),
@@ -136,46 +150,107 @@ class _ResponseViewerState extends State<ResponseViewer>
   }
 
   Widget _buildBodyTab(ApiResponse resp) {
-    if (resp.body.isEmpty) {
-      return const Center(child: Text('Empty response body'));
-    }
+    final hasScriptResults = resp.scriptResult != null &&
+        resp.scriptResult!.testResults.isNotEmpty;
 
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          const TabBar(
-            tabs: [
-              Tab(text: 'Pretty', height: 32),
-              Tab(text: 'Raw', height: 32),
-            ],
-            labelStyle: TextStyle(fontSize: 12),
-            indicatorSize: TabBarIndicatorSize.label,
+    return Column(
+      children: [
+        // Script test results
+        if (hasScriptResults) _buildTestResults(resp.scriptResult!),
+        // Body content
+        Expanded(
+          child: resp.body.isEmpty
+              ? const Center(child: Text('Empty response body'))
+              : DefaultTabController(
+                  length: 2,
+                  child: Column(
+                    children: [
+                      const TabBar(
+                        tabs: [
+                          Tab(text: 'Pretty', height: 32),
+                          Tab(text: 'Raw', height: 32),
+                        ],
+                        labelStyle: TextStyle(fontSize: 12),
+                        indicatorSize: TabBarIndicatorSize.label,
+                      ),
+                      Expanded(
+                        child: TabBarView(
+                          children: [
+                            _buildPrettyBody(resp),
+                            _buildRawBody(resp),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTestResults(ScriptResult result) {
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 120),
+      decoration: BoxDecoration(
+        color: result.passed
+            ? Colors.green.shade50
+            : Colors.red.shade50,
+        border: Border(
+          bottom: BorderSide(
+            color: result.passed ? Colors.green.shade200 : Colors.red.shade200,
           ),
-          Expanded(
-            child: TabBarView(
+        ),
+      ),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: result.testResults.length,
+        itemBuilder: (context, index) {
+          final test = result.testResults[index];
+          final passed = test.contains('PASS');
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
               children: [
-                _buildPrettyBody(resp),
-                _buildRawBody(resp),
+                Icon(
+                  passed ? Icons.check_circle : Icons.cancel,
+                  size: 14,
+                  color: passed ? Colors.green : Colors.red,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    test,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontFamily: 'monospace',
+                      color: passed ? Colors.green.shade800 : Colors.red.shade800,
+                    ),
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildPrettyBody(ApiResponse resp) {
     return Container(
-      color: const Color(0xFF1E1E1E),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1E293B)
+          : const Color(0xFF1E1E1E),
       padding: const EdgeInsets.all(12),
       child: SingleChildScrollView(
         child: SelectableText(
           resp.prettyBody,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 13,
-            color: Color(0xFFD4D4D4),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFE2E8F0)
+                : const Color(0xFFD4D4D4),
             height: 1.5,
           ),
         ),
@@ -185,15 +260,19 @@ class _ResponseViewerState extends State<ResponseViewer>
 
   Widget _buildRawBody(ApiResponse resp) {
     return Container(
-      color: const Color(0xFF1E1E1E),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1E293B)
+          : const Color(0xFF1E1E1E),
       padding: const EdgeInsets.all(12),
       child: SingleChildScrollView(
         child: SelectableText(
           resp.body,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 13,
-            color: Color(0xFFD4D4D4),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFE2E8F0)
+                : const Color(0xFFD4D4D4),
             height: 1.5,
           ),
         ),
@@ -249,22 +328,23 @@ class _ResponseViewerState extends State<ResponseViewer>
 class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color? color;
 
-  const _InfoChip({required this.icon, required this.label});
+  const _InfoChip({required this.icon, required this.label, this.color});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: Colors.grey.shade600),
+        Icon(icon, size: 14, color: color ?? Colors.grey.shade600),
         const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 12,
-            color: Colors.grey.shade700,
+            color: color ?? Colors.grey.shade700,
           ),
         ),
       ],

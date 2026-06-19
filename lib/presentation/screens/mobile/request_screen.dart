@@ -26,13 +26,77 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
   @override
   void initState() {
     super.initState();
-    _requestTabController = TabController(length: 5, vsync: this);
+    _requestTabController = TabController(length: 4, vsync: this);
   }
 
   @override
   void dispose() {
     _requestTabController.dispose();
     super.dispose();
+  }
+
+  void _showScriptsDialog(dynamic request) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (ctx, scrollController) => DefaultTabController(
+          length: 2,
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Scripts',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const TabBar(
+                tabs: [
+                  Tab(text: 'Pre-request'),
+                  Tab(text: 'Tests'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    ScriptEditorWidget(
+                      script: request.preRequestScript ?? '',
+                      label: 'Pre-request Script',
+                      onChanged: (v) {
+                        ref.read(currentRequestProvider.notifier).updateRequest(
+                              (r) => r.copyWith(preRequestScript: v),
+                            );
+                      },
+                    ),
+                    ScriptEditorWidget(
+                      script: request.testsScript ?? '',
+                      label: 'Tests Script',
+                      onChanged: (v) {
+                        ref.read(currentRequestProvider.notifier).updateRequest(
+                              (r) => r.copyWith(testsScript: v),
+                            );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -45,13 +109,41 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
       appBar: AppBar(
         title: const Text(AppStrings.tabRequest),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.read(currentRequestProvider.notifier).reset();
-              ref.read(responseProvider.notifier).clearResponse();
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              switch (value) {
+                case 'scripts':
+                  _showScriptsDialog(request);
+                  break;
+                case 'reset':
+                  ref.read(currentRequestProvider.notifier).reset();
+                  ref.read(responseProvider.notifier).clearResponse();
+                  break;
+              }
             },
-            tooltip: 'Reset',
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'scripts',
+                child: Row(
+                  children: [
+                    Icon(Icons.code, size: 20),
+                    SizedBox(width: 12),
+                    Text('Scripts'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'reset',
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh, size: 20),
+                    SizedBox(width: 12),
+                    Text('Reset'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -78,7 +170,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
                       ref.read(currentRequestProvider.notifier).setUrl(url);
                     },
                     decoration: const InputDecoration(
-                      hintText: 'Enter URL or paste cURL',
+                      hintText: 'Enter URL',
                       isDense: true,
                     ),
                     style: const TextStyle(
@@ -111,7 +203,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
             ),
           ),
 
-          // Request config tabs
+          // Request config tabs (4 tabs: Params, Headers, Body, Auth)
           TabBar(
             controller: _requestTabController,
             tabs: const [
@@ -119,7 +211,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
               Tab(text: 'Headers'),
               Tab(text: 'Body'),
               Tab(text: 'Auth'),
-              Tab(text: 'Scripts'),
             ],
             labelStyle: const TextStyle(fontSize: 13),
           ),
@@ -134,7 +225,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
                 _buildHeadersTab(request),
                 _buildBodyTab(request),
                 _buildAuthTab(request),
-                _buildScriptsTab(request),
               ],
             ),
           ),
@@ -211,7 +301,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
 
     return Column(
       children: [
-        // Body type toggle
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
@@ -244,8 +333,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
             ],
           ),
         ),
-
-        // Body content
         Expanded(
           child: body.type == BodyType.json
               ? JsonEditorWidget(
@@ -304,47 +391,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
               (r) => r.copyWith(auth: updated),
             );
       },
-    );
-  }
-
-  Widget _buildScriptsTab(dynamic request) {
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          const TabBar(
-            tabs: [
-              Tab(text: 'Pre-request'),
-              Tab(text: 'Tests'),
-            ],
-            labelStyle: TextStyle(fontSize: 12),
-          ),
-          Expanded(
-            child: TabBarView(
-              children: [
-                ScriptEditorWidget(
-                  script: request.preRequestScript ?? '',
-                  label: 'Pre-request Script',
-                  onChanged: (v) {
-                    ref.read(currentRequestProvider.notifier).updateRequest(
-                          (r) => r.copyWith(preRequestScript: v),
-                        );
-                  },
-                ),
-                ScriptEditorWidget(
-                  script: request.testsScript ?? '',
-                  label: 'Tests Script',
-                  onChanged: (v) {
-                    ref.read(currentRequestProvider.notifier).updateRequest(
-                          (r) => r.copyWith(testsScript: v),
-                        );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

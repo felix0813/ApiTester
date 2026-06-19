@@ -12,7 +12,7 @@ class ShellScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('API Tester'),
+        title: const Text(AppStrings.appName),
         actions: const [
           SyncStatusIndicator(),
         ],
