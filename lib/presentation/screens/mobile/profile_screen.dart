@@ -10,6 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/sync_status_indicator.dart';
 import 'auth_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -25,6 +26,9 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.tabProfile),
+        actions: const [
+          SyncStatusIndicator(),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

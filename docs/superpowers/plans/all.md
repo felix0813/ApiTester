@@ -1,0 +1,4 @@
+- Phase 1 (MVP)：HTTP 请求编辑器、响应展示、本地存储、环境变量基础、Android 适配
+- Phase 2：完整集合管理、历史记录、Auth 认证、Windows 适配、深色模式
+- Phase 3：云同步（Supabase 账号系统、实时同步、离线队列、冲突处理）
+- Phase 4：测试脚本、Runner、性能优化

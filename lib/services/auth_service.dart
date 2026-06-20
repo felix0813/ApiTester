@@ -1,7 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/constants/env_config.dart';
 
 class AuthService {
   final SupabaseClient _client = Supabase.instance.client;
+
+  String get _redirectUri => '${EnvConfig.oauthRedirectScheme}://login-callback/';
 
   User? get currentUser => _client.auth.currentUser;
 
@@ -32,14 +35,14 @@ class AuthService {
   Future<bool> signInWithGoogle() async {
     return await _client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: 'io.supabase.api-tester://login-callback/',
+      redirectTo: _redirectUri,
     );
   }
 
   Future<bool> signInWithGitHub() async {
     return await _client.auth.signInWithOAuth(
       OAuthProvider.github,
-      redirectTo: 'io.supabase.api-tester://login-callback/',
+      redirectTo: _redirectUri,
     );
   }
 

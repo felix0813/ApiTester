@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Phase 2 增强 — 深色模式切换、Auth 认证 UI（Bearer/Basic/API Key）、集合拖拽排序、Windows 桌面端侧边栏布局
+**Goal:** Phase 2 增强 — 深色模式切换、Auth 认证 UI（Bearer/Basic/API Key）、集合拖拽排序、Windows 桌面端侧边栏布局、历史记录回放
 
-**Architecture:** 4 个独立模块并行推进。深色模式通过 Riverpod provider 管理主题状态，AppTheme 新增 darkTheme。Auth UI 在请求编辑器中新增第 4 个 Tab。集合排序通过 Hive 字段持久化 + ReorderableListView。桌面端新增 desktop_router + ShellScreen + 响应式布局。
+**Architecture:** 5 个独立模块并行推进。深色模式通过 Riverpod provider 管理主题状态，AppTheme 新增 darkTheme。Auth UI 在请求编辑器中新增第 4 个 Tab。集合排序通过 Hive `sortOrder` 字段持久化 + ReorderableListView。桌面端新增 desktop_router + ShellScreen + 响应式布局。历史记录支持从列表点击回放到请求编辑器。
 
 **Tech Stack:** Flutter 3.x, Riverpod 2.x, GoRouter 14.x, Hive 2.x
 
@@ -119,13 +119,13 @@ git commit -m "feat: add dark theme to AppTheme"
 
 - [ ] **Step 1: 创建 settings_provider.dart**
 
+注意：直接使用 Flutter 内置的 `ThemeMode`（来自 `package:flutter/material.dart`），不自定义枚举，避免命名冲突。
+
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../../data/datasources/local/local_database.dart';
-
-enum ThemeMode { light, dark, system }
+import '../../data/datasources/local/local_database.dart';
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
   return ThemeModeNotifier();
@@ -189,6 +189,8 @@ git commit -m "feat: add theme mode provider and settings Hive box"
 
 - [ ] **Step 1: 更新 app.dart**
 
+当前 `app.dart` 中 `ApiTesterApp` 内部包裹了 `ProviderScope`，需要移除（改为在 `main.dart` 中统一包裹）。同时将类从 `StatelessWidget` 改为 `ConsumerWidget` 以支持 `ref.watch`。
+
 ```dart
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
@@ -211,11 +213,7 @@ class ApiTesterApp extends ConsumerWidget {
       title: 'API Tester',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode == ThemeMode.light
-          ? ThemeMode.light
-          : themeMode == ThemeMode.dark
-              ? ThemeMode.dark
-              : ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: routerConfig,
       debugShowCheckedModeBanner: false,
     );
@@ -223,17 +221,10 @@ class ApiTesterApp extends ConsumerWidget {
 }
 ```
 
-注意：`main.dart` 中调用 `ApiTesterApp()` 的地方需要更新，因为现在是 `ConsumerWidget`（需要在 ProviderScope 内部）。查看 `main.dart`：
-
-```dart
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await LocalDatabase.init();
-  runApp(const ProviderScope(child: ApiTesterApp()));
-}
-```
-
-如果 `ApiTesterApp` 改为 `ConsumerWidget`，则移除外层 `ProviderScope`（在 app.dart 中已移除，main.dart 中包裹即可）。
+关键改动：
+1. `StatelessWidget` → `ConsumerWidget`
+2. 移除内部 `ProviderScope` 包裹（`MaterialApp.router` 直接返回）
+3. `themeMode` 直接传入 Flutter 的 `ThemeMode`，无需手动映射（因为 `settings_provider.dart` 已使用 Flutter 内置 `ThemeMode`）
 
 - [ ] **Step 2: 更新 main.dart**
 
@@ -249,6 +240,8 @@ void main() async {
   runApp(const ProviderScope(child: ApiTesterApp()));
 }
 ```
+
+注意：`ProviderScope` 仅在 `main.dart` 中出现一次，`app.dart` 中不再包含。
 
 - [ ] **Step 3: Commit**
 
@@ -348,7 +341,7 @@ git commit -m "feat: add theme switcher to profile screen"
 
 ```dart
 import 'package:flutter/material.dart';
-import '../../../data/models/auth_config.dart';
+import '../../data/models/auth_config.dart';
 
 class AuthConfigWidget extends StatelessWidget {
   final AuthConfig config;
@@ -547,167 +540,49 @@ git commit -m "feat: inject auth headers in HttpEngine"
 
 ## 模块 P2-C：集合拖拽排序
 
-### Task P2-C1: 给 CollectionItem 添加 sortOrder 字段
+排序方案：在 `CollectionItem` 模型上添加 `sortOrder` int 字段（HiveField 8），通过持久化顺序值实现拖拽排序。现有数据中该字段默认为 0，首次启动时按创建时间自动迁移排序。
+
+### Task P2-C1: CollectionItem 添加 sortOrder + DataSource 排序
 
 **Files:**
 - Modify: `lib/data/models/collection.dart`
+- Modify: `lib/data/datasources/local/collection_local_datasource.dart`
 
-- [ ] **Step 1: 添加 sortOrder 字段并重新生成 .g.dart**
+- [ ] **Step 1: 修改 collection.dart 添加 sortOrder 字段**
 
-在 CollectionItem 类中添加新字段（使用新的 typeId 但保留旧字段不变以兼容）... 
+在 `CollectionItem` 类中，在 `@HiveField(7) DateTime updatedAt;` 之后添加：
 
-**更简单的方案**：不修改模型，在 provider 层面使用列表位置作为排序依据，通过 `reorderItems` 方法将新的顺序持久化到现有的 childIds 列表（修改 childIds 的顺序即可）。
-
-这样不需要修改 Hive 模型，只需修改 provider 和 UI。
-
-- [ ] **Step 1: 在 collection_provider.dart 添加 reorder 方法**
-
-在 `CollectionTreeNotifier` 类中添加：
-
-```dart
-  Future<void> reorderItems(List<CollectionItem> items) async {
-    // Save all items with their new order
-    for (int i = 0; i < items.length; i++) {
-      final item = items[i].copyWith();
-      item.updatedAt = DateTime.now();
-      await _repo.save(item);
-    }
-    // Watcher will auto-update state
-  }
-
-  /// Reorder child items within a parent folder
-  Future<void> reorderChildren(String parentId, int oldIndex, int newIndex) async {
-    final parent = await _repo.getById(parentId);
-    if (parent == null) return;
-
-    final childIds = List<String>.from(parent.childIds);
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
-    final movedId = childIds.removeAt(oldIndex);
-    childIds.insert(newIndex, movedId);
-
-    await _repo.save(parent.copyWith(childIds: childIds));
-  }
-
-  /// Move an item to a different parent
-  Future<void> moveItem(String itemId, String? newParentId) async {
-    final item = await _repo.getById(itemId);
-    if (item == null) return;
-
-    // Remove from old parent
-    if (item.parentId != null) {
-      final oldParent = await _repo.getById(item.parentId!);
-      if (oldParent != null) {
-        await _repo.save(oldParent.copyWith(
-          childIds: oldParent.childIds.where((id) => id != itemId).toList(),
-        ));
-      }
-    }
-
-    // Add to new parent
-    if (newParentId != null) {
-      final newParent = await _repo.getById(newParentId);
-      if (newParent != null && newParent.isFolder) {
-        await _repo.save(newParent.copyWith(
-          childIds: [...newParent.childIds, itemId],
-        ));
-      }
-    }
-
-    await _repo.save(item.copyWith(parentId: newParentId));
-  }
-```
-
-- [ ] **Step 2: Commit**
-
-```bash
-git add lib/presentation/providers/collection_provider.dart
-git commit -m "feat: add reorder and move methods to collection provider"
-```
-
----
-
-### Task P2-C2: 将 CollectionScreen 改为可拖拽排序
-
-**Files:**
-- Modify: `lib/presentation/screens/mobile/collection_screen.dart`
-
-- [ ] **Step 1: 修改 CollectionScreen 使用 ReorderableListView**
-
-将 `ListView.builder` 替换为 `ReorderableListView.builder`：
-
-```dart
-  return ReorderableListView.builder(
-    padding: const EdgeInsets.all(12),
-    itemCount: rootItems.length,
-    onReorder: (oldIndex, newIndex) {
-      ref.read(collectionTreeProvider.notifier).reorderChildren(
-            '', // root level — use a special approach
-            oldIndex,
-            newIndex,
-          );
-    },
-    proxyDecorator: (child, index, animation) {
-      return AnimatedBuilder(
-        animation: animation,
-        builder: (context, child) {
-          return Material(
-            elevation: 2,
-            shadowColor: Colors.black26,
-            borderRadius: BorderRadius.circular(12),
-            child: child,
-          );
-        },
-        child: child,
-      );
-    },
-    itemBuilder: (context, index) {
-      final item = rootItems[index];
-      return _CollectionTreeTile(
-        key: ValueKey(item.id),
-        item: item,
-        allItems: items,
-        // ... same as before
-      );
-    },
-  );
-```
-
-对于 root 级别的 reorder：由于 root items 没有 parentId，其顺序由它们在列表中的隐式位置决定。最简单的方案是在 CollectionItem 模型上添加 `sortOrder` int 字段来持久化顺序。让我们采用这个方案。
-
-由于这需要修改 Hive 模型，更新 Task P2-C1 的做法：
-
-**在 `collection.dart` 中添加 sortOrderHiveField：**
-
-在现有字段之后添加：
 ```dart
   @HiveField(8)
   int sortOrder;
 ```
 
-在构造函数中添加默认值 `this.sortOrder = 0`，在 `copyWith` 中添加 `int? sortOrder` 参数。
+构造函数中添加默认值：`this.sortOrder = 0`
 
-然后重新运行 `dart run build_runner build --delete-conflicting-outputs`。
-
-更新 `collection_local_datasource.dart` 的 `getRootItems()` 和 `getByParentId()` 方法按 sortOrder 排序：
-
+`copyWith` 方法添加参数：
 ```dart
-  Future<List<CollectionItem>> getRootItems() async {
-    final items = await getByParentId(null);
-    items.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    return items;
+  CollectionItem copyWith({
+    String? name,
+    String? parentId,
+    List<String>? childIds,
+    CollectionType? type,
+    String? requestId,
+    bool clearRequestId = false,
+    int? sortOrder,
+  }) {
+    return CollectionItem(
+      id: id,
+      name: name ?? this.name,
+      parentId: parentId ?? this.parentId,
+      childIds: childIds ?? List<String>.from(this.childIds),
+      type: type ?? this.type,
+      requestId: clearRequestId ? null : (requestId ?? this.requestId),
+      sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
+    );
   }
 ```
-
-**这里将完整修改放在一个任务中完成。**
-
-- [ ] **Step 1 重写：修改 collection.dart 添加 sortOrder**
-
-在 `lib/data/models/collection.dart` 中：
-1. `CollectionItem` 添加 `@HiveField(8) int sortOrder;`
-2. 构造函数添加 `this.sortOrder = 0`
-3. `copyWith` 添加 `int? sortOrder` 参数
 
 - [ ] **Step 2: 运行代码生成**
 
@@ -715,9 +590,9 @@ git commit -m "feat: add reorder and move methods to collection provider"
 cd G:/ApiTester && dart run build_runner build --delete-conflicting-outputs
 ```
 
-- [ ] **Step 3: 更新 CollectionLocalDataSource 排序**
+- [ ] **Step 3: 更新 CollectionLocalDataSource 按 sortOrder 排序**
 
-在 `collection_local_datasource.dart` 中修改 `getRootItems()` 和 `getByParentId()`：
+修改 `collection_local_datasource.dart` 中的 `getByParentId()` 方法：
 
 ```dart
   Future<List<CollectionItem>> getByParentId(String? parentId) async {
@@ -727,35 +602,75 @@ cd G:/ApiTester && dart run build_runner build --delete-conflicting-outputs
     items.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return items;
   }
-
-  Future<List<CollectionItem>> getRootItems() async {
-    return getByParentId(null);
-  }
 ```
 
-- [ ] **Step 4: 更新 collection_provider.dart 的 reorder 方法**
+- [ ] **Step 4: 数据迁移 — 现有数据 sortOrder 初始化**
+
+在 `local_database.dart` 的 `init()` 方法末尾添加一次性迁移逻辑，为现有数据按创建时间赋 sortOrder：
 
 ```dart
+    // Migrate: assign sortOrder to existing items by createdAt
+    final collections = Hive.box<CollectionItem>(collectionsBox);
+    bool needsSort = collections.values.any((c) => c.sortOrder == 0 && collections.values.length > 1);
+    if (needsSort) {
+      final all = collections.values.toList();
+      // Group by parentId
+      final groups = <String?, List<CollectionItem>>{};
+      for (final item in all) {
+        groups.putIfAbsent(item.parentId, () => []).add(item);
+      }
+      for (final entry in groups.entries) {
+        final sorted = entry.value..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        for (int i = 0; i < sorted.length; i++) {
+          sorted[i].sortOrder = i;
+          await sorted[i].save();
+        }
+      }
+    }
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/data/models/collection.dart lib/data/models/collection.g.dart lib/data/datasources/local/collection_local_datasource.dart lib/data/datasources/local/local_database.dart
+git commit -m "feat: add sortOrder field to CollectionItem with migration"
+```
+
+---
+
+### Task P2-C2: Provider 添加 reorder 方法 + CollectionScreen 拖拽 UI
+
+**Files:**
+- Modify: `lib/presentation/providers/collection_provider.dart`
+- Modify: `lib/presentation/screens/mobile/collection_screen.dart`
+
+- [ ] **Step 1: 在 collection_provider.dart 添加 reorder 方法**
+
+在 `CollectionTreeNotifier` 类中添加：
+
+```dart
+  /// Reorder root-level items (parentId == null)
   Future<void> reorderRootItems(int oldIndex, int newIndex) async {
     final items = getRootItems();
     if (oldIndex < 0 || oldIndex >= items.length) return;
-    if (newIndex < 0 || newIndex >= items.length) return;
+    if (newIndex < 0 || newIndex > items.length) return;
 
     final movedItem = items.removeAt(oldIndex);
-    items.insert(newIndex, movedItem);
+    items.insert(newIndex > oldIndex ? newIndex - 1 : newIndex, movedItem);
 
     for (int i = 0; i < items.length; i++) {
       await _repo.save(items[i].copyWith(sortOrder: i));
     }
   }
 
+  /// Reorder child items within a parent folder
   Future<void> reorderChildren(String parentId, int oldIndex, int newIndex) async {
     final children = getChildren(parentId);
     if (oldIndex < 0 || oldIndex >= children.length) return;
-    if (newIndex < 0 || newIndex >= children.length) return;
+    if (newIndex < 0 || newIndex > children.length) return;
 
     final movedItem = children.removeAt(oldIndex);
-    children.insert(newIndex, movedItem);
+    children.insert(newIndex > oldIndex ? newIndex - 1 : newIndex, movedItem);
 
     for (int i = 0; i < children.length; i++) {
       await _repo.save(children[i].copyWith(sortOrder: i));
@@ -763,15 +678,11 @@ cd G:/ApiTester && dart run build_runner build --delete-conflicting-outputs
   }
 ```
 
-- [ ] **Step 5: 修改 collection_screen.dart 使用 ReorderableListView**
+- [ ] **Step 2: 修改 collection_screen.dart 使用 ReorderableListView**
 
-将最外层的 items 列表使用 `ReorderableListView.builder` 渲染：
+将 `build` 方法中的 `ListView.builder` 替换为 `ReorderableListView.builder`：
 
 ```dart
-import 'package:flutter/material.dart';
-// ... 保持现有 imports
-
-// 在 build 中替换 ListView.builder:
           return ReorderableListView.builder(
             padding: const EdgeInsets.all(12),
             itemCount: rootItems.length,
@@ -809,11 +720,11 @@ import 'package:flutter/material.dart';
           );
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add lib/data/models/collection.dart lib/data/models/collection.g.dart lib/data/datasources/local/collection_local_datasource.dart lib/presentation/providers/collection_provider.dart lib/presentation/screens/mobile/collection_screen.dart
-git commit -m "feat: drag-and-drop reorder support for collections"
+git add lib/presentation/providers/collection_provider.dart lib/presentation/screens/mobile/collection_screen.dart
+git commit -m "feat: add drag-and-drop reorder to collection screen"
 ```
 
 ---
@@ -838,6 +749,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/request_provider.dart';
+import '../../providers/environment_provider.dart';
 import '../../widgets/method_selector.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/collection.dart';
@@ -857,6 +769,7 @@ class _DesktopShellScreenState extends ConsumerState<DesktopShellScreen> {
   Widget build(BuildContext context) {
     final collectionsAsync = ref.watch(collectionTreeProvider);
     final request = ref.watch(currentRequestProvider);
+    final activeEnv = ref.watch(activeEnvironmentProvider);
 
     return Scaffold(
       body: Row(
@@ -969,7 +882,7 @@ class _DesktopShellScreenState extends ConsumerState<DesktopShellScreen> {
                       FilledButton(
                         onPressed: () => ref
                             .read(responseProvider.notifier)
-                            .sendRequest(null),
+                            .sendRequest(activeEnv?.variables),
                         child: const Text('Send'),
                       ),
                       const SizedBox(width: 8),
@@ -1389,9 +1302,120 @@ git commit -m "feat: add desktop GoRouter with ShellRoute"
 
 ---
 
-## 模块 P2-E：构建验证
+## 模块 P2-E：历史记录回放
 
-### Task P2-E1: 全部验证
+当前 `profile_screen.dart` 中 `_HistoryTile.onTap` 是空的（注释写了 "History replay" 但未实现）。需要完善此功能，让用户点击历史记录可以回放到请求编辑器。
+
+### Task P2-E1: 实现历史记录回放
+
+**Files:**
+- Modify: `lib/presentation/screens/mobile/profile_screen.dart`
+- Modify: `lib/presentation/providers/history_provider.dart`
+
+- [ ] **Step 1: 给 HistoryEntry 添加可选的完整请求快照**
+
+修改 `history_entry.dart`，添加可选的 `requestSnapshot` 字段用于回放：
+
+```dart
+  @HiveField(9)
+  final String? requestSnapshot; // JSON 序列化的 ApiRequest
+```
+
+在构造函数中添加：`this.requestSnapshot`
+
+重新运行代码生成：
+```bash
+cd G:/ApiTester && dart run build_runner build --delete-conflicting-outputs
+```
+
+- [ ] **Step 2: 更新 history_provider.dart 添加回放方法**
+
+在 `HistoryListNotifier` 类中添加：
+
+```dart
+  /// Get the full request from history entry's snapshot
+  ApiRequest? getRequestFromHistory(HistoryEntry entry) {
+    if (entry.requestSnapshot == null) return null;
+    try {
+      final map = jsonDecode(entry.requestSnapshot!) as Map<String, dynamic>;
+      return ApiRequest.fromMap(map);
+    } catch (_) {
+      return null;
+    }
+  }
+```
+
+添加导入：
+```dart
+import 'dart:convert';
+import '../../data/models/api_request.dart';
+```
+
+- [ ] **Step 3: 更新 profile_screen.dart 的 _HistoryTile.onTap**
+
+将 `_HistoryTile` 改为 `ConsumerWidget`，在 onTap 中回放请求：
+
+```dart
+class _HistoryTile extends ConsumerWidget {
+  final HistoryEntry entry;
+
+  const _HistoryTile({required this.entry});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ... 保持现有 build 代码不变
+  }
+}
+```
+
+修改 `onTap` 回调：
+
+```dart
+        onTap: () {
+          final historyNotifier = ref.read(historyListProvider.notifier);
+          final request = historyNotifier.getRequestFromHistory(entry);
+          if (request != null) {
+            ref.read(currentRequestProvider.notifier).loadRequest(request);
+            // Navigate to request tab
+            // 如果在 ShellScreen 中，可以通过 navigationShell 切换 tab
+          }
+        },
+```
+
+- [ ] **Step 4: 更新 ResponseNotifier.sendRequest 保存完整请求快照**
+
+在 `request_provider.dart` 中 `ResponseNotifier.sendRequest` 保存历史时，附加请求快照：
+
+```dart
+      // Save to history with request snapshot
+      final historyRepo = _reader(historyRepositoryProvider);
+      await historyRepo.save(HistoryEntry(
+        method: request.method,
+        url: request.url,
+        statusCode: response.statusCode,
+        durationMs: response.durationMs,
+        bodySize: response.bodySize,
+        requestSnapshot: jsonEncode(request.toMap()),
+      ));
+```
+
+添加导入：
+```dart
+import 'dart:convert';
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/data/models/history_entry.dart lib/data/models/history_entry.g.dart lib/presentation/providers/history_provider.dart lib/presentation/providers/request_provider.dart lib/presentation/screens/mobile/profile_screen.dart
+git commit -m "feat: implement history replay - tap to load request into editor"
+```
+
+---
+
+## 模块 P2-G：构建验证
+
+### Task P2-G1: 自动化验证
 
 - [ ] **Step 1: Run analysis**
 
@@ -1418,18 +1442,58 @@ git commit -m "chore: finalize Phase 2 build"
 
 ---
 
+### Task P2-G2: 手动验证清单
+
+逐项验证以下功能，确保所有 Phase 2 功能正常工作：
+
+**深色模式 (P2-A):**
+- [ ] Profile 页面可以切换 Light/Dark/Auto 三种主题
+- [ ] 切换后应用主题立即生效（无需重启）
+- [ ] 深色模式下所有页面（请求编辑器、集合、环境、Profile）颜色正确
+- [ ] 退出重进后主题设置被保留
+
+**Auth 认证 (P2-B):**
+- [ ] 请求编辑器出现第 4 个 Auth Tab
+- [ ] Bearer Token 模式：输入 token 后发送请求，验证 Authorization header 包含 `Bearer xxx`
+- [ ] Basic Auth 模式：输入用户名密码后发送请求，验证 Authorization header 包含 Base64 编码
+- [ ] API Key 模式：输入 header name 和 key 后发送请求，验证自定义 header 正确注入
+- [ ] None 模式：不注入任何认证 header
+
+**集合拖拽排序 (P2-C):**
+- [ ] 长按/拖拽集合项可以调整顺序
+- [ ] 拖拽排序后退出重进，顺序被保留
+- [ ] 文件夹内的子项也可以独立排序
+- [ ] 新创建的项目排在末尾
+
+**桌面端 (P2-D):**
+- [ ] Windows 端启动后显示左侧边栏 + 右侧内容区布局
+- [ ] 侧边栏显示集合树，点击可展开/折叠
+- [ ] 点击集合中的请求项，右侧加载该请求
+- [ ] URL 工具栏中修改 method/URL 后发送请求正常
+- [ ] 左右分栏（Params/Headers/Body/Auth | Response）布局正确
+- [ ] 窗口缩放后布局自适应
+
+**历史记录回放 (P2-E):**
+- [ ] 发送请求后历史记录中出现新条目
+- [ ] 点击历史记录条目，请求被加载到编辑器
+- [ ] 回放的请求包含完整的 method/url/headers/body/auth 配置
+
+---
+
 ## 实现顺序
 
 1. **P2-A1**: 添加 darkTheme 到 AppTheme
 2. **P2-A2**: 创建 theme provider + settings box
-3. **P2-A3**: 更新 app.dart + main.dart
+3. **P2-A3**: 更新 app.dart + main.dart（移除重复 ProviderScope）
 4. **P2-A4**: Profile 页主题切换 UI
 5. **P2-B1**: 创建 AuthConfigWidget
 6. **P2-B2**: 在请求编辑器接入 Auth Tab
 7. **P2-B3**: HttpEngine 注入 Auth headers
-8. **P2-C1**: Collection sortOrder + provider reorder
-9. **P2-C2**: CollectionScreen ReorderableListView
+8. **P2-C1**: CollectionItem sortOrder + DataSource 排序 + 数据迁移
+9. **P2-C2**: CollectionScreen ReorderableListView + provider reorder 方法
 10. **P2-D1**: Desktop Shell Screen
 11. **P2-D2**: Desktop Request Screen
 12. **P2-D3**: Desktop Router
-13. **P2-E1**: Build verification
+13. **P2-E1**: 历史记录回放（HistoryEntry 快照 + 回放逻辑）
+14. **P2-G1**: 自动化验证（flutter analyze + flutter test）
+15. **P2-G2**: 手动验证清单

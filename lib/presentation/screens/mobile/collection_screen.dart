@@ -8,6 +8,7 @@ import '../../../data/models/api_request.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/sync_status_indicator.dart';
 
 class CollectionScreen extends ConsumerStatefulWidget {
   const CollectionScreen({super.key});
@@ -106,6 +107,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
       appBar: AppBar(
         title: const Text(AppStrings.tabCollections),
         actions: [
+          const SyncStatusIndicator(),
           IconButton(
             icon: const Icon(Icons.play_circle_outline),
             tooltip: 'Run Collection',

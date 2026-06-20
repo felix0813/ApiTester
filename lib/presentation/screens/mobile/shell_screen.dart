@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../widgets/sync_status_indicator.dart';
 
 class ShellScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -11,12 +10,6 @@ class ShellScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.appName),
-        actions: const [
-          SyncStatusIndicator(),
-        ],
-      ),
       body: navigationShell,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: navigationShell.currentIndex,

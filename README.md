@@ -1,16 +1,73 @@
-# api_tester
+# API Tester
 
-A new Flutter project.
+A powerful HTTP API testing tool built with Flutter.
 
-## Getting Started
+## Required Environment Variables
 
-This project is a starting point for a Flutter application.
+All environment variables **must** be provided via `--dart-define` flags. The app
+will crash immediately at startup if any are missing, with a clear error message
+listing what's absent.
 
-A few resources to get you started if this is your first Flutter project:
+| Variable | Description | Example |
+|---|---|---|
+| `SUPABASE_URL` | Your Supabase project URL | `https://abcdefghijklm.supabase.co` |
+| `SUPABASE_ANON_KEY` | Supabase publishable (anon) key | `sb_publishable_xxxxxxxxxxxx` |
+| `OAUTH_REDIRECT_SCHEME` | OAuth redirect URL scheme | `io.supabase.api-tester` |
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Where to find these values
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. **SUPABASE_URL** & **SUPABASE_ANON_KEY**: Go to your
+   [Supabase Dashboard](https://supabase.com/dashboard) → select your project →
+   **Settings** → **API**. Copy the **Project URL** and **anon public** key.
+
+2. **OAUTH_REDIRECT_SCHEME**: This must match the custom URL scheme registered
+   in your Android `AndroidManifest.xml` and iOS `Info.plist`. The app appends
+   `://login-callback/` to this scheme for Supabase OAuth redirects.
+
+## Running the App
+
+### Debug mode
+
+```bash
+flutter run \
+  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_YOUR_ANON_KEY \
+  --dart-define=OAUTH_REDIRECT_SCHEME=io.supabase.api-tester
+```
+
+### Release build
+
+```bash
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_YOUR_ANON_KEY \
+  --dart-define=OAUTH_REDIRECT_SCHEME=io.supabase.api-tester
+```
+
+### Run on Windows (desktop)
+
+```bash
+flutter run -d windows \
+  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_YOUR_ANON_KEY \
+  --dart-define=OAUTH_REDIRECT_SCHEME=io.supabase.api-tester
+```
+
+## Features
+
+- **Request Builder** — Compose HTTP requests with headers, query params, body
+  (JSON / form-data), and authentication (Bearer, Basic, API Key)
+- **Collections** — Organize requests into folders, run entire collections
+- **Environments** — Manage variables across different environments
+- **Cloud Sync** — Sign in to sync your data across devices via Supabase
+- **Import** — Import collections from Postman or OpenAPI specs
+
+## Tech Stack
+
+- Flutter 3.22+
+- Dart 3.4+
+- Supabase (auth, database)
+- Riverpod (state management)
+- GoRouter (navigation)
+- Hive (local storage)
+- Dio (HTTP client)

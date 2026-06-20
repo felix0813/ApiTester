@@ -4,6 +4,7 @@ import '../../providers/environment_provider.dart';
 import '../../../data/models/environment.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/sync_status_indicator.dart';
 
 class EnvironmentScreen extends ConsumerStatefulWidget {
   const EnvironmentScreen({super.key});
@@ -168,6 +169,9 @@ class _EnvironmentScreenState extends ConsumerState<EnvironmentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.tabEnvironments),
+        actions: const [
+          SyncStatusIndicator(),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateDialog,

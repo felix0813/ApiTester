@@ -11,6 +11,7 @@ import '../../widgets/json_editor_widget.dart';
 import '../../widgets/response_viewer.dart';
 import '../../widgets/auth_config_widget.dart';
 import '../../widgets/script_editor_widget.dart';
+import '../../widgets/sync_status_indicator.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
   const RequestScreen({super.key});
@@ -109,6 +110,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
       appBar: AppBar(
         title: const Text(AppStrings.tabRequest),
         actions: [
+          const SyncStatusIndicator(),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
