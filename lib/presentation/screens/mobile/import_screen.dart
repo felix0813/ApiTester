@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/utils/postman_importer.dart';
 import '../../../core/utils/openapi_importer.dart';
@@ -102,7 +103,14 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Import')),
+      appBar: AppBar(
+        leading: BackButton(
+          onPressed: () => Navigator.of(context).canPop()
+              ? Navigator.of(context).pop()
+              : context.go('/profile'),
+        ),
+        title: const Text('Import'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(

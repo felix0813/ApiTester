@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/collection_provider.dart';
 import '../../providers/request_provider.dart';
 import '../../../data/models/api_request.dart';
@@ -72,6 +73,11 @@ class _RunnerScreenState extends ConsumerState<RunnerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(
+          onPressed: () => Navigator.of(context).canPop()
+              ? Navigator.of(context).pop()
+              : context.go('/collections'),
+        ),
         title: const Text('Collection Runner'),
         actions: [
           if (!_isRunning)

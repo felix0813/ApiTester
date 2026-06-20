@@ -70,7 +70,10 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   );
                   ref.read(collectionTreeProvider.notifier).save(folder);
                 } else {
-                  final request = ApiRequest(name: name);
+                  final request = ApiRequest(
+                    name: name,
+                    collectionId: parentId,
+                  );
                   final item = CollectionItem(
                     name: name,
                     parentId: parentId,
@@ -95,6 +98,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
     requestRepo.getById(requestId).then((req) {
       if (req != null && mounted) {
         ref.read(currentRequestProvider.notifier).loadRequest(req);
+        context.go('/request');
       }
     });
   }
@@ -163,9 +167,9 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                 key: ValueKey(item.id),
                 item: item,
                 allItems: items,
-                onTap: () {
-                  if (item.isRequest && item.requestId != null) {
-                    _loadRequest(item.requestId!);
+                onRequestTap: (requestItem) {
+                  if (requestItem.requestId != null) {
+                    _loadRequest(requestItem.requestId!);
                   }
                 },
                 onDelete: (id) {
@@ -185,7 +189,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 class _CollectionTreeTile extends StatelessWidget {
   final CollectionItem item;
   final List<CollectionItem> allItems;
-  final VoidCallback? onTap;
+  final ValueChanged<CollectionItem> onRequestTap;
   final ValueChanged<String> onDelete;
   final ValueChanged<String> onCreateChild;
 
@@ -193,7 +197,7 @@ class _CollectionTreeTile extends StatelessWidget {
     super.key,
     required this.item,
     required this.allItems,
-    this.onTap,
+    required this.onRequestTap,
     required this.onDelete,
     required this.onCreateChild,
   });
@@ -219,7 +223,7 @@ class _CollectionTreeTile extends StatelessWidget {
               item.name,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
-            onTap: item.isFolder && canExpand ? null : onTap,
+            onTap: item.isRequest ? () => onRequestTap(item) : null,
             trailing: PopupMenuButton<String>(
               onSelected: (action) {
                 switch (action) {
@@ -262,7 +266,7 @@ class _CollectionTreeTile extends StatelessWidget {
                   child: _CollectionTreeTile(
                     item: child,
                     allItems: allItems,
-                    onTap: onTap,
+                    onRequestTap: onRequestTap,
                     onDelete: onDelete,
                     onCreateChild: onCreateChild,
                   ),

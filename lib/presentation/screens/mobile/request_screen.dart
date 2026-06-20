@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/request_provider.dart';
 import '../../providers/environment_provider.dart';
+import '../../providers/collection_provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/request_body.dart';
+import '../../../data/models/collection.dart';
 import '../../../data/models/auth_config.dart';
 import '../../widgets/method_selector.dart';
 import '../../widgets/kv_editor.dart';
@@ -34,6 +36,114 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
   void dispose() {
     _requestTabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showSaveRequestDialog(dynamic request) async {
+    final nameController = TextEditingController(text: request.name);
+    final collections = ref.read(collectionTreeProvider).valueOrNull ?? [];
+    final folders = collections.where((item) => item.isFolder).toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    String? selectedCollectionId = request.collectionId;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Save Request'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Request name',
+                  hintText: 'Enter request name',
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String?>(
+                value: folders.any((f) => f.id == selectedCollectionId)
+                    ? selectedCollectionId
+                    : null,
+                decoration: const InputDecoration(
+                  labelText: 'Collection / folder',
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('No collection'),
+                  ),
+                  ...folders.map(
+                    (folder) => DropdownMenuItem<String?>(
+                      value: folder.id,
+                      child: Text(folder.name),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  setDialogState(() => selectedCollectionId = value);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final name = nameController.text.trim();
+                if (name.isEmpty) return;
+
+                final savedRequest = request.copyWith(
+                  name: name,
+                  collectionId: selectedCollectionId,
+                  clearCollectionId: selectedCollectionId == null,
+                );
+                await ref.read(requestRepositoryProvider).save(savedRequest);
+                ref.read(currentRequestProvider.notifier).loadRequest(savedRequest);
+
+                final existingItems = ref.read(collectionTreeProvider).valueOrNull ?? [];
+                CollectionItem? existingItem;
+                for (final item in existingItems) {
+                  if (item.isRequest && item.requestId == savedRequest.id) {
+                    existingItem = item;
+                    break;
+                  }
+                }
+
+                if (selectedCollectionId != null) {
+                  final collectionItem = existingItem?.copyWith(
+                        name: name,
+                        parentId: selectedCollectionId,
+                        requestId: savedRequest.id,
+                      ) ??
+                      CollectionItem(
+                        name: name,
+                        parentId: selectedCollectionId,
+                        type: CollectionType.request,
+                        requestId: savedRequest.id,
+                      );
+                  await ref.read(collectionTreeProvider.notifier).save(collectionItem);
+                } else if (existingItem != null) {
+                  await ref.read(collectionTreeProvider.notifier).delete(existingItem.id);
+                }
+
+                if (mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Request saved')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showScriptsDialog(dynamic request) {
@@ -108,8 +218,13 @@ class _RequestScreenState extends ConsumerState<RequestScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.tabRequest),
+        title: Text(request.name),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.save_outlined),
+            tooltip: 'Save Request',
+            onPressed: () => _showSaveRequestDialog(request),
+          ),
           const SyncStatusIndicator(),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
