@@ -55,6 +55,7 @@ class CollectionItem {
   CollectionItem copyWith({
     String? name,
     String? parentId,
+    bool clearParentId = false,
     List<String>? childIds,
     CollectionType? type,
     String? requestId,
@@ -66,7 +67,7 @@ class CollectionItem {
     return CollectionItem(
       id: id,
       name: name ?? this.name,
-      parentId: parentId ?? this.parentId,
+      parentId: clearParentId ? null : (parentId ?? this.parentId),
       childIds: childIds ?? List<String>.from(this.childIds),
       type: type ?? this.type,
       requestId: clearRequestId ? null : (requestId ?? this.requestId),
