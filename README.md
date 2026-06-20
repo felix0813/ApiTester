@@ -26,6 +26,17 @@ listing what's absent.
 
 ## Running the App
 
+If Flutter exits with `Target file "" not found`, the run configuration is
+passing an empty Dart entrypoint (for example `-t ""`). In Android Studio, open
+**Run > Edit Configurations...** and make sure:
+
+- **Dart entrypoint** is `lib/main.dart`
+- **Additional run args** contains only the `--dart-define` values, for example:
+
+```text
+--dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co --dart-define=SUPABASE_ANON_KEY=sb_publishable_YOUR_ANON_KEY --dart-define=OAUTH_REDIRECT_SCHEME=io.supabase.api-tester
+```
+
 ### Debug mode
 
 ```bash
