@@ -6,6 +6,45 @@ part of 'collection.dart';
 // TypeAdapterGenerator
 // **************************************************************************
 
+class CollectionTypeAdapter extends TypeAdapter<CollectionType> {
+  @override
+  final int typeId = 13;
+
+  @override
+  CollectionType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return CollectionType.folder;
+      case 1:
+        return CollectionType.request;
+      default:
+        return CollectionType.folder;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, CollectionType obj) {
+    switch (obj) {
+      case CollectionType.folder:
+        writer.writeByte(0);
+        break;
+      case CollectionType.request:
+        writer.writeByte(1);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CollectionTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
 class CollectionItemAdapter extends TypeAdapter<CollectionItem> {
   @override
   final int typeId = 1;

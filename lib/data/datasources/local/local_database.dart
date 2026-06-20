@@ -27,6 +27,7 @@ class LocalDatabase {
 
     // Register main model adapters
     Hive.registerAdapter(ApiRequestAdapter());
+    Hive.registerAdapter(CollectionTypeAdapter());
     Hive.registerAdapter(CollectionItemAdapter());
     Hive.registerAdapter(EnvironmentAdapter());
     Hive.registerAdapter(HistoryEntryAdapter());

@@ -5,7 +5,13 @@ part 'collection.g.dart';
 
 const _uuid = Uuid();
 
-enum CollectionType { folder, request }
+@HiveType(typeId: 13)
+enum CollectionType {
+  @HiveField(0)
+  folder,
+  @HiveField(1)
+  request,
+}
 
 @HiveType(typeId: 1)
 class CollectionItem {
